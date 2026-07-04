@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISD System - Helpdesk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a', /* slate-900 */
+                        darkcard: '#1e293b', /* slate-800 */
+                        isdgreen: '#10b981', /* emerald-500 */
+                        isdhover: '#059669', /* emerald-600 */
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .loader { border-top-color: #10b981; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px;}
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* ================= NEW ANIMATIONS ================= */
+        
+        /* 1. Slider Styles */
+        .slide {
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        .slide.active { opacity: 1; z-index: 1; }
+
+        /* 2. Text Bounce Looping (Hidup/Melayang) */
+        .animate-bounceLoop {
+            animation: bounceLoop 3s ease-in-out infinite;
+        }
+        .delay-100 { animation-delay: 0.2s; }
+        .delay-200 { animation-delay: 0.4s; }
+        .delay-300 { animation-delay: 0.6s; }
+
+        @keyframes bounceLoop {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        /* 3. Button HeartBeat (Berdetak) */
+        .animate-heartBeat {
+            animation: heartBeat 2s ease-in-out infinite;
+        }
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.08); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.08); }
+            70%, 100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col relative">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-darkbg bg-opacity-80 z-[9999] hidden flex-col justify-center items-center">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-700 h-16 w-16 mb-4"></div>
+        <h2 class="text-xl font-semibold text-white" id="loadingText">Memproses...</h2>
+        <p class="text-slate-400 text-sm mt-2">Mohon jangan tutup halaman ini</p>
+    </div>
+
+    <nav id="publicNavbar" class="w-full bg-darkbg border-b border-slate-800 py-4 px-6 md:px-12 flex justify-between items-center z-50">
+        <div class="flex items-center gap-2 cursor-pointer select-none" onclick="handleLogoClick()">
+            <div class="bg-isdgreen text-darkbg p-1.5 rounded-md">
+                <i class="ph-fill ph-cpu text-2xl"></i>
+            </div>
+            <span class="font-extrabold text-xl tracking-wider italic">ISD-SYSTEM</span>
+        </div>
+        <div id="previewBadge" class="hidden px-3 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded-full border border-yellow-500/30">
+             MODE
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col w-full relative">
+
+        <section id="viewLanding" class="flex-grow flex flex-col items-center justify-center px-4 relative overflow-hidden hidden">
+            
+            <div id="landingSlider" class="absolute inset-0 z-0 opacity-20 bg-darkbg">
+                
+                <img src="https://ik.imagekit.io/isdwmc/WMC%202025-2026.jpg?updatedAt=1775204393539?q=80&w=2070&auto=format&fit=crop" class="slide active">
+                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop" class="slide">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop" class="slide">
+                <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=2070&auto=format&fit=crop" class="slide">
+                <video autoplay loop muted playsinline class="slide">
+                    <source src="https://cdn.pixabay.com/video/2022/01/18/104394-666358364_large.mp4" type="video/mp4">
+                </video>
+            </div>
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-darkbg via-darkbg/80 to-transparent z-0"></div>
+
+            <div class="z-10 flex flex-col items-center text-center max-w-3xl mt-10">
+                <div class="px-4 py-1.5 rounded-full border border-isdgreen/30 text-isdgreen text-xs font-bold tracking-widest mb-6 bg-isdgreen/5 animate-bounceLoop">
+                    INFORMATION SYSTEM DIVISION • HELPDESK
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black italic tracking-tight mb-2 leading-none animate-bounceLoop delay-100">SOLUSI</h1>
+                <h1 class="text-5xl md:text-7xl font-black italic tracking-tight text-isdgreen mb-6 leading-none animate-bounceLoop delay-200">TEKNOLOGI.</h1>
+                
+                <p class="text-slate-300 mb-10 text-sm md:text-base max-w-xl">
+                    Sistem pelaporan gangguan terpadu untuk mendukung kelancaran operasional melalui layanan TI yang responsif dan profesional.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                    <button onclick="switchView('viewForm')" class="bg-isdgreen hover:bg-isdhover text-darkbg font-bold py-3 px-8 rounded-xl flex items-center justify-center gap-2 transition-all animate-heartBeat">
+                        BUAT LAPORAN <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                    <button onclick="switchView('viewTrack'); loadPublicTickets()" class="bg-transparent hover:bg-slate-800 border border-slate-600 text-white font-semibold py-3 px-8 rounded-xl transition-all hover:-translate-y-1">
+                        CEK STATUS
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="viewForm" class="flex-grow py-10 px-4 flex justify-center hidden">
+            <div class="w-full max-w-4xl bg-darkcard rounded-3xl p-6 md:p-10 shadow-2xl border border-slate-700">
+                <button onclick="switchView('viewLanding')" class="text-slate-400 hover:text-white flex items-center gap-2 text-sm font-semibold mb-6 transition">
+                    <i class="ph-bold ph-caret-left"></i> KEMBALI
+                </button>
+                
+                <h2 class="text-2xl md:text-3xl font-black italic text-center mb-8">FORM <span class="text-isdgreen">PELAPORAN</span></h2>
+
+                <form id="ticketForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">NAMA PELAPOR</label>
+                            <div class="relative">
+                                <i class="ph ph-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="nama_pelapor" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">UNIT PELAPOR</label>
+                           <div class="relative">
+    <i class="ph ph-briefcase absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10"></i>
+    <select name="unit_pelapor" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition appearance-none">
+        <option value="" disabled selected>Pilih Unit Pelapor</option>
+        <option value="FAP">FAP</option>
+        <option value="MCU">MCU</option>
+        <option value="UGD">UGD</option>
+        <option value="OPD">OPD</option>
+        <option value="IPD">IPD</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="RADIOLOGI">RADIOLOGI</option>
+        <option value="LABORATORIUM">LABORATORIUM</option>
+        <option value="DOKTER">DOKTER</option>
+        <option value="REKAM MEDIS">REKAM MEDIS</option>
+        <option value="ASSISTANT CENTER">ASSISTANT CENTER</option>
+        <option value="BILLING">BILLING</option>
+        <option value="UPSP">UPSP</option>
+        <option value="FARMASI">FARMASI</option>
+        <option value="NUTRISIONIST">NUTRISIONIST</option>
+        <option value="KIE">KIE (KOMUNIKASI, INFORMASI DAN EDUKASI)</option>
+        <option value="LAINNYA">LAINNYA</option>
+    </select>
+    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+</div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">FAP / ID USER (Opsional)</label>
+                            <div class="relative">
+                                <i class="ph ph-hash absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="fap" class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">WHATSAPP</label>
+                            <div class="relative">
+                                <i class="ph ph-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="number" name="whatsapp" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">JUMLAH ITEM</label>
+                            <div class="relative">
+                                <i class="ph ph-stack absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="number" name="jumlah_item" min="1" value="1" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">JENIS KENDALA</label>
+                            <select name="jenis_kendala" id="jenisKendala" onchange="toggleRegisterReq()" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition appearance-none">
+                                <option value="SIRS">SIRS (Sistem Informasi RS)</option>
+                                <option value="JARINGAN">Jaringan & Internet</option>
+                                <option value="HARDWARE">Hardware (PC/Printer/ Order/ Repair)</option>
+
+                                <option value="LAINNYA">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-400 tracking-wider">NOMOR REGISTER <span id="reqLabel" class="text-red-400">*Wajib untuk jenis SIRS</span></label>
+                        <div class="relative">
+                            <i class="ph ph-file-text absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" name="no_register" id="noRegister" placeholder="Contoh: IGD.260301.001" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none fgocus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-400 tracking-wider">DETAIL KRONOLOGI</label>
+                        <textarea name="kronologi" rows="4" required placeholder="Jelaskan masalah secara detail..." class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-isdgreen focus:ring-1 focus:ring-isdgreen transition resize-none"></textarea>
+                    </div>
+
+                    <button type="submit" id="btnSubmitTicket" class="w-full bg-isdgreen hover:bg-isdhover text-darkbg font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all mt-4">
+                        <i class="ph-bold ph-paper-plane-tilt"></i> KIRIM LAPORAN
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section id="viewSuccess" class="flex-grow py-10 px-4 flex justify-center items-center hidden">
+            <div class="w-full max-w-2xl bg-darkcard rounded-3xl p-8 border border-slate-700 text-center relative overflow-hidden">
+                <div class="w-16 h-16 bg-isdgreen rounded-full flex justify-center items-center mx-auto mb-6">
+                    <i class="ph-bold ph-check text-darkbg text-3xl"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-black italic uppercase tracking-wider mb-2">KAMU BERHASIL SUBMIT DENGAN TICKET</h2>
+                <h1 id="successTicketId" class="text-3xl md:text-4xl font-black italic text-isdgreen tracking-widest mb-8">TIC-000000000</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-left">
+                    <div class="bg-darkbg border border-slate-700 rounded-xl p-4 flex items-center gap-3">
+                        <i class="ph text-yellow-500 ph-camera text-2xl"></i>
+                        <p class="text-sm font-semibold">Silakan <span class="text-white">SCREENSHOT</span> halaman ini.</p>
+                    </div>
+                    <div class="bg-darkbg border border-slate-700 rounded-xl p-4 flex items-center gap-3">
+                        <i class="ph text-blue-400 ph-share-network text-2xl"></i>
+                        <p class="text-sm font-semibold">Informasikan ke <span class="text-white">TIM ISD</span> untuk proses lebih cepat</p>
+                    </div>
+                </div>
+
+                <button onclick="switchView('viewLanding')" class="text-slate-400 hover:text-white font-bold text-sm tracking-wider uppercase transition">
+                    TUTUP PESAN
+                </button>
+            </div>
+        </section>
+
+        <section id="viewTrack" class="flex-grow py-10 px-4 md:px-10 hidden">
+            <div class="max-w-5xl mx-auto">
+                <button onclick="switchView('viewLanding')" class="text-slate-400 hover:text-white flex items-center gap-2 text-sm font-semibold mb-6 transition">
+                    <i class="ph-bold ph-caret-left"></i> KEMBALI
+                </button>
+                <h2 class="text-3xl md:text-4xl font-black italic mb-8">TRACK <span class="text-isdgreen">STATUS</span></h2>
+
+                <div class="space-y-4" id="publicTicketList">
+                    </div>
+            </div>
+        </section>
+
+        <section id="viewLogin" class="flex-grow flex items-center justify-center px-4 hidden relative">
+            <div class="w-full max-w-md bg-darkcard rounded-3xl p-8 border border-slate-700 shadow-2xl relative z-10">
+                <div class="text-center mb-8">
+                    <div class="bg-darkbg inline-block p-3 rounded-xl border border-slate-700 mb-4">
+                        <i class="ph-fill ph-lock-key text-3xl text-isdgreen"></i>
+                    </div>
+                    <h2 class="text-2xl font-black italic tracking-wide">SYSTEM <span class="text-isdgreen">LOGIN</span></h2>
+                    <p class="text-slate-400 text-sm mt-1">Khusus Tim Internal ISD</p>
+                    <div id="previewLoginHint" class="hidden mt-3 text-xs bg-slate-800 border border-slate-600 p-2 rounded text-left text-slate-300">
+                        <strong class="text-yellow-500">Preview Mode Auth:</strong><br>
+                        Senior: admin / Demo2026!<br>
+                        Staff: staff / Demo2026!
+                    </div>
+                </div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-5">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 tracking-wider">USERNAME</label>
+                        <input type="text" id="loginUser" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-isdgreen">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 tracking-wider">PASSWORD</label>
+                        <input type="password" id="loginPass" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-isdgreen">
+                    </div>
+                    <button type="submit" class="w-full bg-isdgreen hover:bg-isdhover text-darkbg font-bold py-3 rounded-xl mt-4 transition">
+                        MASUK SISTEM
+                    </button>
+                    <button type="button" onclick="switchView('viewLanding')" class="w-full bg-transparent text-slate-400 hover:text-white text-sm py-2 mt-2">
+                        Batal
+                    </button>
+                </form>
+            </div>
+        </section>
+
+
+        <div id="systemLayout" class="hidden flex-col w-full min-h-screen bg-darkbg absolute top-0 left-0 z-40 pb-20">
+            <nav class="w-full bg-darkcard border-b border-slate-800 py-3 px-6 md:px-10 flex justify-between items-center sticky top-0 z-50 shadow-md">
+                <div class="flex items-center gap-2">
+                    <div class="bg-isdgreen text-darkbg p-1.5 rounded-md">
+                        <i class="ph-fill ph-cpu text-xl"></i>
+                    </div>
+                    <span class="font-extrabold text-lg tracking-wider italic">ISDSYSTEM</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-darkbg border border-slate-700 px-4 py-1.5 rounded-full cursor-pointer hover:border-slate-500 transition" onclick="alert('Fitur ubah profil akan tersedia di update berikutnya.')">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-[10px] font-bold text-isdgreen uppercase tracking-wider" id="userRoleDisplay">ROLE</p>
+                            <p class="text-sm font-semibold text-white leading-tight" id="userNameDisplay">Nama User</p>
+                        </div>
+                        <i class="ph ph-user-circle text-2xl text-slate-300"></i>
+                    </div>
+                    <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 p-2 rounded-xl transition" title="Logout">
+                        <i class="ph-bold ph-sign-out text-xl"></i>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="flex-grow p-4 md:p-8 max-w-7xl w-full mx-auto w-full">
+                
+                <div class="flex justify-between items-end mb-8 border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl md:text-3xl font-black italic" id="sysPageTitle">DASHBOARD <span class="text-isdgreen">MONITORING</span></h2>
+                    <button id="btnToggleSystemView" onclick="toggleSystemView()" class="bg-isdgreen hover:bg-isdhover text-darkbg font-bold py-2 px-6 rounded-xl transition text-sm">
+                        DATA MANAGEMENT
+                    </button>
+                </div>
+
+                <div id="subViewDashboard" class="space-y-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700 relative overflow-hidden">
+                            <i class="ph ph-stack text-6xl text-slate-700 absolute -right-2 -bottom-2 opacity-50"></i>
+                            <h3 class="text-4xl font-black text-white" id="statToday">0</h3>
+                            <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Ticket Hari Ini</p>
+                        </div>
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700 relative overflow-hidden">
+                            <i class="ph ph-clock text-6xl text-yellow-500 absolute -right-2 -bottom-2 opacity-10"></i>
+                            <h3 class="text-4xl font-black text-yellow-500" id="statOngoing">0</h3>
+                            <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Ongoing</p>
+                        </div>
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700 relative overflow-hidden">
+                            <i class="ph ph-check-circle text-6xl text-isdgreen absolute -right-2 -bottom-2 opacity-10"></i>
+                            <h3 class="text-4xl font-black text-isdgreen" id="statDone">0</h3>
+                            <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Selesai</p>
+                        </div>
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700 relative overflow-hidden">
+                            <i class="ph ph-warning-circle text-6xl text-red-500 absolute -right-2 -bottom-2 opacity-10"></i>
+                            <h3 class="text-4xl font-black text-red-500" id="statPending">0</h3>
+                            <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Belum Selesai</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700">
+                            <h4 class="text-xs font-bold text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-wider"><i class="ph ph-pie-chart"></i> Kategori Ticket</h4>
+                            <div class="relative h-48 w-full flex justify-center">
+                                <canvas id="chartKategori"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700">
+                            <h4 class="text-xs font-bold text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-wider"><i class="ph ph-trophy"></i> Top Unit (Ranking)</h4>
+                            <div class="space-y-4 mt-6" id="topUnitList">
+                                <p class="text-slate-500 text-sm text-center py-4">Memuat data...</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-darkcard p-5 rounded-2xl border border-slate-700">
+                            <h4 class="text-xs font-bold text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-wider"><i class="ph ph-fire"></i> Terakhir Masuk</h4>
+                            <div class="space-y-3 mt-4" id="recentIssueList">
+                                 </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subViewManage" class="hidden flex-col gap-4">
+                    <div class="bg-darkcard p-4 rounded-2xl border border-slate-700 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div class="flex-grow flex flex-col md:flex-row gap-3 w-full">
+                            <div class="relative w-full md:w-64">
+                                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="filterSearch" placeholder="Find BA/NoReg/Pelapor.." class="w-full bg-darkbg border border-slate-600 rounded-lg py-2 pl-9 pr-3 text-sm text-white focus:border-isdgreen focus:outline-none" onkeyup="renderAdminTable()">
+                            </div>
+                            <select id="filterStatus" class="bg-darkbg border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:border-isdgreen focus:outline-none w-full md:w-auto" onchange="renderAdminTable()">
+                                <option value="ALL">Semua Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                            
+                        </div>
+                        <button onclick="exportData()" class="w-full md:w-auto flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 border border-slate-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition">
+                            <i class="ph ph-download-simple"></i> EXPORT DATA
+                        </button>
+                    </div>
+
+                    <div class="bg-darkcard border border-slate-700 rounded-2xl overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-800/50 border-b border-slate-700 text-xs text-slate-400 uppercase tracking-wider font-bold">
+                                    <th class="p-4">Ticket</th>
+                                    <th class="p-4">Pelapor</th>
+                                    <th class="p-4">Kendala</th>
+                                    <th class="p-4">STAFF/ NomorBA</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody" class="divide-y divide-slate-700/50 text-sm">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer id="publicFooter" class="text-center py-6 text-slate-500 text-xs">
+        <p>Copyright &copy; 2026 ISD System. All rights reserved.</p>
+         </footer>
+
+    <div id="modalReportInfo" class="fixed inset-0 bg-darkbg/90 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-slate-700 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative">
+            <button onclick="closeModal('modalReportInfo')" class="absolute top-6 right-6 bg-slate-800 text-slate-400 hover:text-white p-2 rounded-full transition">
+                <i class="ph-bold ph-x"></i>
+            </button>
+            <div class="p-6 md:p-8">
+                <p class="text-isdgreen text-xs font-bold mb-1" id="m_pubId">TIC-000</p>
+                <h3 class="text-2xl font-black italic mb-6">REPORT <span class="text-white">INFORMATION</span></h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="flex gap-4">
+                            <div class="w-1/2">
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pelapor</p>
+                                <p class="font-bold text-white text-sm uppercase" id="m_pubName">-</p>
+                            </div>
+                            <div class="w-1/2">
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Unit</p>
+                                <p class="font-bold text-white text-sm uppercase" id="m_pubUnit">-</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Kendala / No. Reg</p>
+                            <p class="font-bold text-white text-sm uppercase"><span id="m_pubKendala">-</span> / <span id="m_pubReg">-</span></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Kronologi</p>
+                            <p class="text-slate-300 text-sm italic mt-1" id="m_pubKrono">"-"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-darkbg border border-slate-700 rounded-xl p-5 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-isdgreen"></div>
+                        <h4 class="text-isdgreen text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i class="ph-bold ph-pulse"></i> RESOLUSI ISD
+                        </h4>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Handle By / BA</p>
+                                <p class="font-bold text-white text-sm uppercase"><span id="m_pubHandle">-</span> <span class="text-slate-500">/</span> <span id="m_pubBA">-</span></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Action Details</p>
+                                <p class="text-slate-300 text-sm italic mt-1" id="m_pubAction">-</p>
+                            </div>
+                            <div class="pt-3 border-t border-slate-700/50">
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tgl Selesai</p>
+                                <p class="font-bold text-white text-sm" id="m_pubDone">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalUpdate" class="fixed inset-0 bg-darkbg/90 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-slate-700 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl relative">
+            <button onclick="closeModal('modalUpdate')" class="absolute top-6 right-6 text-slate-400 hover:text-white transition">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+            <div class="p-6 md:p-8">
+                <h3 class="text-xl font-black italic mb-6">UPDATE <span class="text-isdgreen">TASK</span></h3>
+                
+                <form id="formUpdate" onsubmit="handleUpdateSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="upd_id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 tracking-wider">HANDLE BY</label>
+                            <input type="text" id="upd_handle" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-isdgreen">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 tracking-wider">STATUS</label>
+                            <select id="upd_status" required class="w-full bg-darkbg border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-isdgreen">
+                                <option value="Pending">Pending</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                           <label class="text-[10px] font-bold text-slate-400 tracking-wider">PERIHAL FIX</label>
+                           <select id="upd_perihal" class="w-full bg-darkbg border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-isdgreen appearance-none">
+        <option value="" disabled selected>Pilih Perihal...</option>
+
+     <option value="Open Pasien FAP">Open Pasien FAP</option>
+        <option value="Open Pasien OPD">Open Pasien OPD</option>
+        <option value="Open Pasien MCU">Open Pasien MCU</option>
+        <option value="Open Pasien UGD">Open Pasien UGD</option>
+        <option value="Open Pasien Admin">Open Pasien Admin</option>
+        <option value="Open Pasien IPD">Open Pasien IPD</option>
+        <option value="Open Pasien BILLING">Open Pasien BILLING</option>
+        <option value="ERROR SYSTEM SIRS">ERROR SYSTEM SIRS</option>
+        <option value="Error Inputan Obat">Error Inputan Obat</option>
+        <option value="Penambahan Pemeriksaan">Penambahan Pemeriksaan</option>
+        <option value="Human Error">Human Error</option>
+        <option value="Pengecekan data">Pengecekan data</option>
+        <option value="Perubahan Roles">Perubahan Roles</option>
+        <option value="Pendaftaran akun">Pendaftaran akun </option>
+        <option value="Verifikasi Fit Unfit">Verifikasi Fit Unfit </option>
+        <option value="Development Digitalisasi">Development Digitalisasi</option>
+        <option value="Batal Pasien">Batal Pasien</option>
+        <option value="Retur Obat">Retur Obat</option>
+        <option value="Induction Staff">Induction Staff</option>
+        <option value="Close Open Site"> Close Open Site</option>
+        <option value="Error Inputan LAB"> Error Inputan LAB</option>
+        <option value="Troubleshoot Hardware"> Troubleshoot Hardware</option> 
+        <option value="Serah Terima"> Serah Terima</option>
+        <option value="Order Tinta"> Order Tinta</option>
+        <option value="Peminjaman Barang"> Peminjaman Barang</option>
+        <option value="Permintaan Barang"> Permintaan Barang</option>
+        <option value="Deep Cleaning"> Deep Cleaning</option>
+                           </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 tracking-wider">NOMOR BA (Opsional)</label>
+                            <input type="text" id="upd_ba" class="w-full bg-darkbg border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-isdgreen">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 mt-2">
+                        <label class="text-[10px] font-bold text-slate-400 tracking-wider">ACTION MORE DETAILS ISD</label>
+                        <textarea id="upd_action" rows="3" class="w-full bg-darkbg border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-isdgreen resize-none"></textarea>
+                    </div>
+
+                    <button type="submit" id="btnUpdateTask" class="w-full bg-isdgreen hover:bg-isdhover text-darkbg font-bold py-3 rounded-xl transition mt-4">
+                        UPDATE & SIMPAN
+                    </button>
+                    <div id="upd_locked_msg" class="hidden text-center text-red-400 text-xs font-bold mt-2 bg-red-500/10 p-2 rounded">
+                        TICKET INI SUDAH SELESAI DAN TIDAK BISA DIUBAH
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // SLIDER BACKGROUND ANIMATION LOGIC
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('#landingSlider .slide');
+            let currentSlide = 0;
+
+            if (slides.length > 0) {
+                setInterval(() => {
+                    // Hilangkan class active dari slide sebelumnya
+                    slides[currentSlide].classList.remove('active');
+                    
+                    // Lanjut ke slide berikutnya
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    
+                    // Tambahkan class active ke slide baru
+                    slides[currentSlide].classList.add('active');
+                    
+                    // Jika slide baru adalah Video, reset waktu putarnya agar mulai dari awal
+                    if(slides[currentSlide].tagName === 'VIDEO') {
+                        slides[currentSlide].currentTime = 0;
+                        slides[currentSlide].play();
+                    }
+                }, 10000); // 10000 ms = 10 detik
+            }
+        });
+
+        // ==========================================
+        // SYSTEM STATE & MOCK DATA
+        // ==========================================
+        console.log("App generated using GAS WebApp Builder");
+        let currentUser = null;
+        let allTickets = [];
+        let logoClicks = 0;
+        let clickTimer = null;
+        let myChart = null;
+
+        // Mock DB for Preview Mode
+        let mockDBUsers = [
+            { id: 'U1', username: 'admin', password: 'Demo2026!', nama: 'Admin ISD', role: 'Senior' },
+            { id: 'U2', username: 'staff', password: 'Demo2026!', nama: 'Staff 1', role: 'Staff' }
+        ];
+        let mockDBTickets = [
+            { TicketID: 'TIC-1740268800', Tgl_Laporan: '2026-02-27 10:00:00', Nama_Pelapor: 'Siti', Unit_Pelapor: 'IGD', FAP: '-', WhatsApp: '0812', Jumlah_Item: '1', Jenis_Kendala: 'SIRS', No_Register: 'IGD.001', Kronologi: 'Error login', Status_Ticket: 'Selesai', Handle_By: 'Fahmi', Perihal_Fix: 'Reset session', Nomor_BA: 'BA/ISD/001', Action_Detail: 'Reset DB', Tgl_Selesai: '2026-02-27 11:00:00' },
+            { TicketID: 'TIC-1740268801', Tgl_Laporan: '2026-02-27 12:00:00', Nama_Pelapor: 'Budi', Unit_Pelapor: 'FARMASI', FAP: '-', WhatsApp: '0813', Jumlah_Item: '2', Jenis_Kendala: 'HARDWARE', No_Register: '-', Kronologi: 'Printer mati', Status_Ticket: 'Ongoing', Handle_By: 'Agus', Perihal_Fix: '-', Nomor_BA: '-', Action_Detail: 'Pengecekan kabel', Tgl_Selesai: '-' }
+        ];
+
+        // INIT
+        window.onload = () => {
+            if (typeof google === 'undefined') {
+                document.getElementById('previewBadge').classList.remove('hidden');
+                document.getElementById('previewLoginHint').classList.remove('hidden');
+            }
+            checkLoginState();
+        };
+
+        // ==========================================
+        // UI & NAVIGATION HELPERS
+        // ==========================================
+        function startLoading(text = "Memproses...") {
+            document.getElementById('loadingText').innerText = text;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('loadingOverlay').classList.add('flex');
+            // Disable all inputs/buttons globally during load
+            const inputs = document.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(el => el.disabled = true);
+        }
+
+        function endLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
+            const inputs = document.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(el => el.disabled = false);
+        }
+
+        function switchView(viewId) {
+            const views = ['viewLanding', 'viewForm', 'viewSuccess', 'viewTrack', 'viewLogin'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+            document.getElementById('systemLayout').classList.add('hidden');
+            document.getElementById('systemLayout').classList.remove('flex');
+            
+            document.getElementById('publicNavbar').classList.remove('hidden');
+            document.getElementById('publicFooter').classList.remove('hidden');
+
+            const target = document.getElementById(viewId);
+            if(target) {
+                target.classList.remove('hidden');
+                if(viewId === 'viewLanding' || viewId === 'viewSuccess' || viewId === 'viewLogin' || viewId === 'viewForm') {
+                    target.classList.add('flex');
+                }
+            }
+        }
+
+        function handleLogoClick() {
+            if(currentUser) return; // Jika sudah login abaikan
+            logoClicks++;
+            clearTimeout(clickTimer);
+            if (logoClicks >= 5) {
+                logoClicks = 0;
+                switchView('viewLogin');
+            } else {
+                clickTimer = setTimeout(() => { logoClicks = 0; }, 1000);
+            }
+        }
+
+        function toggleRegisterReq() {
+            const jenis = document.getElementById('jenisKendala').value;
+            const regInput = document.getElementById('noRegister');
+            const reqLabel = document.getElementById('reqLabel');
+            if(jenis === 'SIRS') {
+                regInput.required = true;
+                reqLabel.classList.remove('hidden');
+            } else {
+                regInput.required = false;
+                regInput.value = '';
+                reqLabel.classList.add('hidden');
+            }
+        }
+
+        function getStatusBadge(status) {
+            let color = 'slate-500';
+            let bg = 'slate-800';
+            if(status === 'Selesai') { color = 'isdgreen'; bg = 'isdgreen/10'; }
+            if(status === 'Ongoing') { color = 'yellow-500'; bg = 'yellow-500/10'; }
+            if(status === 'Pending') { color = 'red-500'; bg = 'red-500/10'; }
+            return `<span class="px-3 py-1 bg-${bg} text-${color} border border-${color}/20 text-xs font-bold rounded-full uppercase tracking-wider">${status}</span>`;
+        }
+
+        // ==========================================
+        // PUBLIC FUNCTIONS
+        // ==========================================
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                nama_pelapor: form.nama_pelapor.value,
+                unit_pelapor: form.unit_pelapor.value,
+                fap: form.fap.value,
+                whatsapp: form.whatsapp.value,
+                jumlah_item: form.jumlah_item.value,
+                jenis_kendala: form.jenis_kendala.value,
+                no_register: form.no_register.value,
+                kronologi: form.kronologi.value
+            };
+
+            startLoading("Mengirim Laporan...");
+
+            if (typeof google === 'undefined') {
+                // SIMULASI
+                setTimeout(() => {
+                    const ticketId = 'TIC-' + Date.now();
+                    const now = new Date();
+                    const newTicket = { ...data, TicketID: ticketId, Status_Ticket: 'Pending', Handle_By: '-', Perihal_Fix: '-', Nomor_BA: '-', Action_Detail: '-', Tgl_Selesai: '-', Tgl_Laporan: now.toISOString().replace('T',' ').substring(0,19) };
+                    mockDBTickets.push(newTicket);
+                    
+                    endLoading();
+                    form.reset();
+                    document.getElementById('successTicketId').innerText = ticketId;
+                    switchView('viewSuccess');
+                }, 800);
+            } else {
+                // REAL GAS
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        endLoading();
+                        if(res.success) {
+                            form.reset();
+                            document.getElementById('successTicketId').innerText = res.ticketId;
+                            switchView('viewSuccess');
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        endLoading();
+                        Swal.fire('Koneksi Gagal', err.message, 'error');
+                    })
+                    .createTicket(data);
+            }
+        }
+
+        function loadPublicTickets() {
+            startLoading("Memuat Data...");
+            if (typeof google === 'undefined') {
+                setTimeout(() => {
+                    endLoading();
+                    renderPublicTickets(mockDBTickets.reverse()); // Reverse to simulate newest first
+                }, 500);
+            } else {
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        endLoading();
+                        if(res.success) renderPublicTickets(res.data);
+                        else Swal.fire('Error', res.message, 'error');
+                    })
+                    .withFailureHandler((err) => {
+                        endLoading();
+                        Swal.fire('Error', err.message, 'error');
+                    })
+                    .getPublicTickets();
+            }
+        }
+
+        function renderPublicTickets(data) {
+            const container = document.getElementById('publicTicketList');
+            container.innerHTML = '';
+            if(data.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-500 py-8">Belum ada laporan hari ini.</p>`;
+                return;
+            }
+
+            // Batasi tampil hanya hari ini (secara logika, public view harusnya harian, ini simulasi tampil 10 terakhir)
+            const displayData = data.slice(0, 10); 
+
+            displayData.forEach(t => {
+                let borderLeft = 'border-slate-600';
+                if(t.Status_Ticket === 'Selesai') borderLeft = 'border-isdgreen';
+                if(t.Status_Ticket === 'Ongoing') borderLeft = 'border-yellow-500';
+                if(t.Status_Ticket === 'Pending') borderLeft = 'border-red-500';
+
+                const html = `
+                <div class="bg-darkcard border border-slate-700 border-l-4 ${borderLeft} rounded-xl p-4 md:p-5 flex justify-between items-center hover:bg-slate-800 transition">
+                    <div>
+                        <p class="text-xs text-isdgreen font-bold mb-1">${t.TicketID}</p>
+                        <h4 class="text-lg font-black uppercase text-white tracking-wide">${t.Unit_Pelapor} <span class="text-slate-500">-</span> ${t.Jenis_Kendala}</h4>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="hidden sm:block">${getStatusBadge(t.Status_Ticket)}</div>
+                        <button onclick='openReportInfo(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="bg-slate-700 hover:bg-slate-600 p-2 md:p-3 rounded-lg text-white transition">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function openReportInfo(ticket) {
+            document.getElementById('m_pubId').innerText = ticket.TicketID;
+            document.getElementById('m_pubName').innerText = ticket.Nama_Pelapor;
+            document.getElementById('m_pubUnit').innerText = ticket.Unit_Pelapor;
+            document.getElementById('m_pubKendala').innerText = ticket.Jenis_Kendala;
+            document.getElementById('m_pubReg').innerText = ticket.No_Register || '-';
+            document.getElementById('m_pubKrono').innerText = `"${ticket.Kronologi}"`;
+            
+            document.getElementById('m_pubHandle').innerText = ticket.Handle_By || '-';
+            document.getElementById('m_pubBA').innerText = ticket.Nomor_BA || '-';
+            document.getElementById('m_pubAction').innerText = ticket.Action_Detail || '-';
+            document.getElementById('m_pubDone').innerText = ticket.Tgl_Selesai || '-';
+
+            document.getElementById('modalReportInfo').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // ==========================================
+
+        // AUTH & INTERNAL SYSTEM
+        // ==========================================
+        function handleLogin(e) {
+            e.preventDefault();
+            const form = {
+                username: document.getElementById('loginUser').value,
+                password: document.getElementById('loginPass').value
+            };
+            startLoading("Mencocokkan Kredensial...");
+
+            if (typeof google === 'undefined') {
+                setTimeout(() => {
+                    endLoading();
+                    const user = mockDBUsers.find(u => u.username === form.username && u.password === form.password);
+                    if(user) {
+                        try { localStorage.setItem('isd_user', JSON.stringify(user)); } catch(e){}
+                        document.getElementById('loginUser').value = '';
+                        document.getElementById('loginPass').value = '';
+                        checkLoginState();
+                    } else {
+                        Swal.fire('Error', 'Username atau Password salah (Preview Mode)', 'error');
+                    }
+                }, 800);
+            } else {
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        endLoading();
+                        if(res.success) {
+                            try { localStorage.setItem('isd_user', JSON.stringify(res.user)); } catch(e){}
+                            document.getElementById('loginUser').value = '';
+                            document.getElementById('loginPass').value = '';
+                            checkLoginState();
+                        } else {
+                            Swal.fire('Gagal Login', res.message, 'error');
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        endLoading();
+                        Swal.fire('Koneksi Gagal', err.message, 'error');
+                    })
+                    .loginUser(form);
+            }
+        }
+
+        function handleLogout() {
+            Swal.fire({
+                title: 'Logout?',
+                text: "Anda akan keluar dari sistem.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Ya, Logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    try { localStorage.removeItem('isd_user'); } catch(e){}
+                    checkLoginState(); // Soft Logout
+                }
+            })
+        }
+
+        function checkLoginState() {
+            let userStr = null;
+            try { userStr = localStorage.getItem('isd_user'); } catch(e){}
+            
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                document.getElementById('userNameDisplay').innerText = currentUser.nama;
+                document.getElementById('userRoleDisplay').innerText = currentUser.role;
+                openSystemView();
+            } else {
+                currentUser = null;
+                switchView('viewLanding');
+            }
+        }
+
+        // ==========================================
+        // DASHBOARD & MANAGE LOGIC
+        // ==========================================
+        function openSystemView() {
+            document.getElementById('publicNavbar').classList.add('hidden');
+            document.getElementById('publicFooter').classList.add('hidden');
+            
+            const views = ['viewLanding', 'viewForm', 'viewSuccess', 'viewTrack', 'viewLogin'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+            });
+
+            document.getElementById('systemLayout').classList.remove('hidden');
+            document.getElementById('systemLayout').classList.add('flex');
+            
+            // Default to Dashboard
+            showSubView('Dashboard');
+            loadSystemData();
+        }
+
+        function toggleSystemView() {
+            const btn = document.getElementById('btnToggleSystemView');
+            const title = document.getElementById('sysPageTitle');
+            if(btn.innerText.includes('DATA MANAGEMENT')) {
+                showSubView('Manage');
+                btn.innerText = 'KEMBALI KE DASHBOARD';
+                title.innerHTML = 'DATA <span class="text-isdgreen">MANAGEMENT</span>';
+            } else {
+                showSubView('Dashboard');
+                btn.innerText = 'DATA MANAGEMENT';
+                title.innerHTML = 'DASHBOARD <span class="text-isdgreen">MONITORING</span>';
+            }
+        }
+
+        function showSubView(mode) {
+            const dash = document.getElementById('subViewDashboard');
+            const manage = document.getElementById('subViewManage');
+            if(mode === 'Dashboard') {
+                dash.classList.remove('hidden');
+                manage.classList.add('hidden'); manage.classList.remove('flex');
+            } else {
+                dash.classList.add('hidden');
+                manage.classList.remove('hidden'); manage.classList.add('flex');
+            }
+        }
+
+        function loadSystemData() {
+            startLoading("Sinkronisasi Data...");
+            if (typeof google === 'undefined') {
+                setTimeout(() => {
+                    endLoading();
+                    allTickets = mockDBTickets.slice(); // Copy
+                    processDashboard();
+                    renderAdminTable();
+                }, 800);
+            } else {
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        endLoading();
+                        if(res.success) {
+                            allTickets = res.data;
+                            processDashboard();
+                            renderAdminTable();
+                        } else {
+                            Swal.fire('Data Error', res.message, 'error');
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        endLoading();
+                        Swal.fire('Koneksi Error', err.message, 'error');
+                    })
+                    .getAllTickets();
+            }
+        }
+
+        function processDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            let countToday = 0;
+            let countOngoing = 0;
+            let countDone = 0;
+            let countPending = 0;
+
+            let katSirs = 0, katJaringan = 0, katHard = 0, katLain = 0;
+            let unitMap = {};
+            let recentHTML = '';
+
+            // Process Data
+            allTickets.forEach((t, index) => {
+                // Tgl Laporan format yyyy-mm-dd...
+                if(t.Tgl_Laporan && t.Tgl_Laporan.startsWith(today)) countToday++;
+                
+                if(t.Status_Ticket === 'Ongoing') countOngoing++;
+                if(t.Status_Ticket === 'Selesai') countDone++;
+                if(t.Status_Ticket === 'Pending') countPending++;
+
+                // Kategori
+                if(t.Jenis_Kendala === 'SIRS') katSirs++;
+                else if(t.Jenis_Kendala === 'JARINGAN') katJaringan++;
+                else if(t.Jenis_Kendala === 'Komputer (Hardware Repair)') katHard++;
+                else katLain++;
+
+                // Unit
+                let unit = (t.Unit_Pelapor || 'UNKNOWN').toUpperCase();
+                unitMap[unit] = (unitMap[unit] || 0) + 1;
+
+                // Recent (Top 3 newest - since array is reversed initially)
+                if(index < 10) {
+                    recentHTML += `
+                    <div class="flex justify-between items-center bg-slate-800/50 p-2 rounded border border-slate-700">
+                        <p class="text-slate-300 text-xs truncate max-w-[200px]">"${t.Kronologi}"</p>
+                        <span class="text-[10px] text-isdgreen font-bold bg-isdgreen/10 px-2 py-0.5 rounded">${t.Unit_Pelapor}</span>
+                    </div>`;
+                }
+            });
+
+            // Update DOM Stats
+            document.getElementById('statToday').innerText = countToday;
+            document.getElementById('statOngoing').innerText = countOngoing;
+            document.getElementById('statDone').innerText = countDone;
+            document.getElementById('statPending').innerText = countPending;
+            document.getElementById('recentIssueList').innerHTML = recentHTML || '<p class="text-sm text-slate-500">Belum ada isyu terbaru</p>';
+
+            // Top Unit Logic
+            let topUnitsArr = Object.keys(unitMap).map(k => ({name: k, count: unitMap[k]})).sort((a,b) => b.count - a.count).slice(0,10);
+            let unitHTML = '';
+            topUnitsArr.forEach((u, idx) => {
+                const max = topUnitsArr[0].count;
+                const width = (u.count / max) * 100;
+                unitHTML += `
+                <div class="relative">
+                    <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                        <span class="flex items-center gap-2"><div class="bg-isdgreen text-darkbg w-4 h-4 rounded-sm flex justify-center items-center text-[10px]">${idx+1}</div> ${u.name}</span>
+                        <span>${u.count}</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-isdgreen h-full rounded-full" style="width: ${width}%"></div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('topUnitList').innerHTML = unitHTML || '<p class="text-sm text-slate-500 text-center">Data kosong</p>';
+
+            // Render Chart
+            renderChart(katSirs, katJaringan, katHard, katLain);
+        }
+
+        function renderChart(sirs, jaringan, hard, lain) {
+            const ctx = document.getElementById('chartKategori');
+            if(myChart) myChart.destroy();
+            
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['SIRS', 'JARINGAN', 'Komputer (Hardware Repair)', 'LAINNYA'],
+                    datasets: [{
+                        data: [sirs, jaringan, hard, lain],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#64748b'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1', font: {size: 10} } }
+                    }
+                }
+            });
+        }
+
+        function renderAdminTable() {
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const tbody = document.getElementById('adminTableBody');
+            
+            tbody.innerHTML = '';
+
+            let filtered = allTickets.filter(t => {
+                const matchSearch = t.TicketID.toLowerCase().includes(search) || t.Nama_Pelapor.toLowerCase().includes(search) || t.No_Register.toLowerCase().includes(search) || t.Nomor_BA.toLowerCase().includes(search) || t.Handle_By.toLowerCase().includes(search);
+                const matchStatus = statusFilter === 'ALL' || t.Status_Ticket === statusFilter;
+                return matchSearch && matchStatus;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">Tidak ada data ditemukan</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(t => {
+                // Logika Disabled Edit untuk Selesai
+                const isSelesai = t.Status_Ticket === 'Selesai';
+                const editBtnColor = isSelesai ? 'text-slate-600 cursor-not-allowed' : 'text-blue-400 hover:text-blue-300';
+                const onclickEdit = isSelesai ? `onclick="Swal.fire('Terkunci', 'Ticket sudah Selesai dan tidak bisa diedit.', 'info')"` : `onclick='openEditModal(${JSON.stringify(t).replace(/'/g, "&#39;")})'`;
+
+                const tr = `
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="p-4"><p class="text-isdgreen font-bold text-xs">${t.TicketID}</p></td>
+                    <td class="p-4">
+                        <p class="font-bold text-white text-sm capitalize">${t.Nama_Pelapor}</p>
+                        <p class="text-xs text-slate-400 uppercase">${t.Unit_Pelapor}</p>
+                    </td>
+                    <td class="p-4 font-bold text-sm text-slate-300">${t.Jenis_Kendala}</td>
+                      <td class="p-4">
+                        <p class="font-bold text-white text-sm capitalize">${t.Nomor_BA}</p>
+                        <p class="text-xs text-slate-400 uppercase">${t.Handle_By}</p>
+                    </td>
+                 
+
+                    <td class="p-4 text-center">${getStatusBadge(t.Status_Ticket)}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick='openReportInfo(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="p-1 text-slate-400 hover:text-white transition" title="View"><i class="ph-bold ph-eye text-lg"></i></button>
+                            <button ${onclickEdit} class="p-1 transition ${editBtnColor}" title="Edit"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
+        }
+
+        // ==========================================
+        // EDIT & UPDATE LOGIC
+        // ==========================================
+        function openEditModal(ticket) {
+            document.getElementById('upd_id').value = ticket.TicketID;
+            document.getElementById('upd_handle').value = ticket.Handle_By !== '-' ? ticket.Handle_By : currentUser.nama;
+            document.getElementById('upd_status').value = ticket.Status_Ticket;
+            document.getElementById('upd_perihal').value = ticket.Perihal_Fix !== '-' ? ticket.Perihal_Fix : '';
+            document.getElementById('upd_ba').value = ticket.Nomor_BA !== '-' ? ticket.Nomor_BA : '';
+            document.getElementById('upd_action').value = ticket.Action_Detail !== '-' ? ticket.Action_Detail : '';
+            
+            const btnSubmit = document.getElementById('btnUpdateTask');
+            const lockedMsg = document.getElementById('upd_locked_msg');
+
+            // Proteksi Frontend tambahan (Walau button edit disabled di table)
+            if(ticket.Status_Ticket === 'Selesai') {
+                btnSubmit.classList.add('hidden');
+                lockedMsg.classList.remove('hidden');
+                document.querySelectorAll('#formUpdate input, #formUpdate select, #formUpdate textarea').forEach(el => el.disabled = true);
+            } else {
+                btnSubmit.classList.remove('hidden');
+                lockedMsg.classList.add('hidden');
+                document.querySelectorAll('#formUpdate input, #formUpdate select, #formUpdate textarea').forEach(el => el.disabled = false);
+            }
+
+            document.getElementById('modalUpdate').classList.remove('hidden');
+        }
+
+        function handleUpdateSubmit(e) {
+            e.preventDefault();
+            const data = {
+                TicketID: document.getElementById('upd_id').value,
+                Handle_By: document.getElementById('upd_handle').value,
+                Status_Ticket: document.getElementById('upd_status').value,
+                Perihal_Fix: document.getElementById('upd_perihal').value || '-',
+                Nomor_BA: document.getElementById('upd_ba').value || '-',
+                Action_Detail: document.getElementById('upd_action').value || '-'
+            };
+
+            // Confirmation if marking as Done
+            if(data.Status_Ticket === 'Selesai') {
+                Swal.fire({
+                    title: 'Tutup Ticket?',
+                    text: "Ticket yang Selesai tidak bisa diubah lagi.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Ya, Selesaikan!'
+                }).then((result) => {
+                    if (result.isConfirmed) executeUpdate(data);
+                })
+            } else {
+                executeUpdate(data);
+            }
+        }
+
+        function executeUpdate(data) {
+            startLoading("Menyimpan Perubahan...");
+            if(typeof google === 'undefined') {
+                setTimeout(() => {
+                    const idx = mockDBTickets.findIndex(t => t.TicketID === data.TicketID);
+                    if(idx > -1) {
+                        mockDBTickets[idx] = { ...mockDBTickets[idx], ...data };
+                        if(data.Status_Ticket === 'Selesai') mockDBTickets[idx].Tgl_Selesai = new Date().toISOString().replace('T',' ').substring(0,19);
+                    }
+                    endLoading();
+                    closeModal('modalUpdate');
+                    Swal.fire('Berhasil', 'Ticket diupdate (Mode Simulasi)', 'success');
+                    loadSystemData(); // Re-fetch
+                }, 800);
+            } else {
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        endLoading();
+                        if(res.success) {
+                            closeModal('modalUpdate');
+                            Swal.fire('Berhasil', res.message, 'success');
+                            loadSystemData(); // WAJIB re-fetch dari server untuk konsistensi
+                        } else {
+                            Swal.fire('Gagal', res.message, 'error');
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        endLoading();
+                        Swal.fire('Koneksi Gagal', err.message, 'error');
+                    })
+                    .updateTicket(data);
+            }
+        }
+
+        // ==========================================
+        // EXPORT FEATURE
+        // ==========================================
+        function exportData() {
+            if(allTickets.length === 0) {
+                Swal.fire('Kosong', 'Tidak ada data untuk diexport', 'info');
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,";
+            const headers = Object.keys(allTickets[0]).join(",");
+            csvContent += headers + "\r\n";
+            
+            allTickets.forEach(row => {
+                let rowData = Object.values(row).map(val => {
+                    let text = String(val).replace(/"/g, '""'); // Escape double quotes
+                    return `"${text}"`; // Wrap in quotes
+                }).join(",");
+                csvContent += rowData + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Data_ISD_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
+</body>
+</html>

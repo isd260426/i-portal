@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem OA - Form Input</title>
+    <style>
+        :root {
+            --primary-color: #005a87;
+            --sidebar-bg: #1a252f;
+            --sidebar-hover: #2c3e50;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR MENU --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 15px 0;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: block;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+
+        /* Menu yang sedang aktif */
+        .menu-item.active {
+            background-color: var(--sidebar-hover);
+            color: white;
+            border-left-color: #3498db;
+            font-weight: 600;
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            max-width: 1000px;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* --- FORM STYLING --- */
+        .form-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            padding: 10px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-cancel {
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+        }
+
+        .btn-cancel:hover {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+        }
+
+        .btn-submit {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .menu-list {
+                display: flex;
+                overflow-x: auto; /* Scroll menyamping di HP */
+                padding: 0;
+                white-space: nowrap;
+            }
+
+            .menu-item {
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+
+            .menu-item.active {
+                border-left-color: transparent;
+                border-bottom-color: #3498db;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .form-card {
+                padding: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR MENU -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            OA SYSTEM
+        </div>
+        <ul class="menu-list">
+            <li><a href="#" class="menu-item">Pengalihan</a></li>
+            <li><a href="#" class="menu-item active">Order Barang</a></li>
+            <li><a href="#" class="menu-item">Reparasi</a></li>
+            <li><a href="#" class="menu-item">Job Request</a></li>
+            <li><a href="#" class="menu-item">Permintaan Akses</a></li>
+        </ul>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Formulir Order Barang</h1>
+        </header>
+
+        <section class="form-card">
+            <form action="#" method="POST">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Departemen Pemohon</label>
+                        <select id="department" name="department" required>
+                            <option value="">-- Pilih Departemen --</option>
+                            <option value="IT">Information Technology (IT)</option>
+                            <option value="HR">Human Resources (HR)</option>
+                            <option value="GA">General Affairs (GA)</option>
+                            <option value="FIN">Finance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="urgency">Tingkat Urgensi</label>
+                        <select id="urgency" name="urgency" required>
+                            <option value="low">Rendah (Low)</option>
+                            <option value="medium" selected>Sedang (Medium)</option>
+                            <option value="high">Tinggi (High/Cito)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemName">Nama / Jenis Barang</label>
+                        <input type="text" id="itemName" name="itemName" placeholder="Contoh: Kertas HVS A4, Tinta Printer..." required>
+                    </div>
+                    <div class="form-group" style="flex: 0.5; min-width: 150px;">
+                        <label for="quantity">Jumlah</label>
+                        <input type="number" id="quantity" name="quantity" placeholder="0" required min="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reason">Alasan Kebutuhan / Keterangan Tambahan</label>
+                        <textarea id="reason" name="reason" placeholder="Jelaskan secara singkat mengapa barang ini dibutuhkan..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel">Batal</button>
+                    <button type="submit" class="btn btn-submit">Kirim Permintaan</button>
+                </div>
+
+            </form>
+        </section>
+    </main>
+
+</body>
+</html>
