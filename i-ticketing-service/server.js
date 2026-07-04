@@ -127,6 +127,45 @@ app.get('/api/tickets/:id', async (req, res) => {
   }
 });
 
+// 6. Update ticket status / details
+app.put('/api/tickets/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { handleBy, status, nomorBA, actionDetail } = req.body;
+    
+    let ticket;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      ticket = await Ticket.findById(id);
+    } else {
+      ticket = await Ticket.findOne({ ticketId: id });
+    }
+
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket record not found.' });
+    }
+
+    if (handleBy !== undefined) ticket.handleBy = handleBy;
+    if (status !== undefined) {
+      ticket.status = status;
+      if (status === 'Selesai') {
+        ticket.tglSelesai = new Date();
+      }
+    }
+    if (nomorBA !== undefined) ticket.nomorBA = nomorBA;
+    if (actionDetail !== undefined) ticket.actionDetail = actionDetail;
+
+    const updatedTicket = await ticket.save();
+    res.json({
+      success: true,
+      message: 'Ticket successfully updated.',
+      ticket: updatedTicket
+    });
+  } catch (error) {
+    console.error('Ticket update failure:', error);
+    res.status(500).json({ error: 'Failed to update ticket details.' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`i-Ticketing microservice running at: http://localhost:${PORT}`);
