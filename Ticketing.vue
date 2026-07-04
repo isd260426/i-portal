@@ -318,7 +318,7 @@
             </div>
             <h2 class="login-title">SYSTEM <span class="accent-green">LOGIN</span></h2>
             <p class="login-subtitle">Khusus Tim Internal ISD</p>
-            <div class="login-hint">
+            <div class="login-hint" hidden>
               <strong>Kredensial Login:</strong><br>
               Senior: admin / Demo2026!<br>
               Staff: staff / Demo2026!
