@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { h } from 'vue'
 import Dashboard from './Dashboard.vue'
 import Ticketing from './Ticketing.vue'
+import Mimo from './Mimo.vue'
 
 // Helpers to render clean dynamic placeholder screens for local previewing
 const createPlaceholder = (title, subtitle, bgColor) => {
@@ -26,7 +27,7 @@ const PortalIsdView = createPlaceholder(
 )
 
 const MimoView = createPlaceholder(
-  'i-MIMO (Mesin Antrian)',
+  'i-MIMO (Micro Monitoring)',
   'Aplikasi antrian terintegrasi untuk mengoptimalkan alur pelayanan pasien di Wedabay Medical Center secara real-time.',
   'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)'
 )
@@ -65,36 +66,34 @@ const routes = [
         redirect: '/i-ticketing'
       },
       {
-        path: 'portal-isd',
-        name: 'PortalIsd',
+        path: 'i-portal',
+        name: 'I-Portal',
         component: PortalIsdView
       },
       {
         path: 'i-ticketing',
-        name: 'ITicketing',
+        name: 'I-Ticketing',
         component: Ticketing
       },
       {
         path: 'i-warehouse',
-        name: 'IWarehouse',
+        name: 'I-Warehouse',
         component: WarehouseView
       },
       {
         path: 'i-mimo',
-        name: 'IMimo',
-        component: MimoView
-      },
-      {
-        path: 'sirs',
-        name: 'Sirs',
-        component: SirsView
-      },
-      {
-        path: 'order-barang',
-        name: 'OrderBarang',
-        component: OrderBarangView
+        name: 'I-Mimo',
+        component: Mimo
       }
     ]
+  },
+  {
+    path: '/dashboard',
+    redirect: '/i-ticketing'
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/i-ticketing'
   }
 ]
 

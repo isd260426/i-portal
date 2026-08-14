@@ -86,6 +86,7 @@
         <div class="action-buttons">
           <button class="btn-primary" @click="refreshDashboard">Refresh System</button>
           <button class="btn-secondary" @click="toggleFullscreen">Fullscreen</button>
+          <a href="https://linktr.ee/isdwmc2025" target="_blank" class="btn-wmc">ISD WMC</a>
         </div>
       </div>
 
@@ -384,7 +385,7 @@
           </div>
           <div style="padding-top: 38px;">
             <ul class="footer-links">
-              <li><router-link to="/portal-isd">Portal ISD</router-link></li>
+              <li><router-link to="/i-portal">Portal ISD</router-link></li>
               <li><router-link to="/order-barang">ORDER BARANG IT</router-link></li>
             </ul>
           </div>
@@ -392,7 +393,7 @@
       </div>
       
       <div class="footer-bottom">
-        2026 &#169; Information System Database. Dikembangkan oleh BSTI ISD
+        2026 &#169; Information System Database. Dikembangkan oleh ISD
       </div>
     </footer>
   </main>
@@ -413,7 +414,7 @@ const activeTab = computed(() => {
   // Check active path to highlight appropriate tab/segmented-control
   if (route.path === '/i-ticketing') {
     return 1;
-  } else if (route.path === '/portal-isd' || route.path === '/i-mimo' || route.path === '/i-warehouse' || route.path === '/' || route.path === '/dashboard') {
+  } else if (route.path === '/i-portal' || route.path === '/i-mimo' || route.path === '/i-warehouse' || route.path === '/' || route.path === '/dashboard') {
     return 2;
   }
   return null;
@@ -425,7 +426,7 @@ const switchDashboard = (num) => {
   if (num === 1) {
     router.push('/i-ticketing');
   } else if (num === 2) {
-    router.push('/portal-isd');
+    router.push('/i-portal');
   }
 };
 
@@ -847,6 +848,7 @@ onUnmounted(() => {
 .beta-badge {
   background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
   color: #000;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.6);
   font-size: 10px;
   font-weight: 700;
   padding: 3px 8px;
@@ -1100,6 +1102,30 @@ onUnmounted(() => {
 }
 
 .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); }
+
+.btn-wmc {
+  background: linear-gradient(135deg, #ff8c42 0%, #ffb347 100%);
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border: 2px solid #ff6b35;
+  border-radius: 24px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+}
+
+.btn-wmc:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.7);
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  border-color: #ff8c42;
+}
 
 /* Main sub-app viewport container (formerly iframe container) */
 .iframe-container {

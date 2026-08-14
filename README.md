@@ -70,7 +70,7 @@ const routes = [
         redirect: 'i-ticketing'
       },
       {
-        path: 'portal-isd',
+        path: 'i-portal',
         name: 'PortalISD',
         component: PortalISD
       },
