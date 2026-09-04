@@ -780,6 +780,12 @@ let slideInterval = null;
 // ----------------------------------------------------
 const getApiBaseUrl = () => {
   if (typeof window === 'undefined') return 'http://localhost:5000';
+  
+  // Jika diakses via HTTPS atau domain Tailscale (*.ts.net), gunakan origin yang sama (reverse proxy /api)
+  if (window.location.protocol === 'https:' || (window.location.hostname && window.location.hostname.endsWith('ts.net'))) {
+    return window.location.origin;
+  }
+
   const hostname = window.location.hostname || 'localhost';
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000';
