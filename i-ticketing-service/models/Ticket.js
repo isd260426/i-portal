@@ -12,11 +12,13 @@ const ticketSchema = new mongoose.Schema({
   },
   unitPelapor: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   fap: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   tanggalMelapor: {
     type: Date,
@@ -25,16 +27,23 @@ const ticketSchema = new mongoose.Schema({
   },
   jenis: {
     type: String,
-    required: true
+    required: true,
+    trim: true
+  },
+  otherJenis: {
+    type: String,
+    trim: true,
+    default: ''
   },
   jumlah: {
-    type: Number,
+    type: String,
     required: true,
-    min: 1
+    default: '1'
   },
   noRegister: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   kendala: {
     type: String,
@@ -44,7 +53,13 @@ const ticketSchema = new mongoose.Schema({
   priority: {
     type: Number,
     enum: [1, 2, 3],
-    required: true
+    required: true,
+    default: 1
+  },
+  moreDetails: {
+    type: String,
+    trim: true,
+    default: ''
   },
   nomerHp: {
     type: String,
@@ -74,16 +89,16 @@ const ticketSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-save hook to auto-generate unique sequential ticket IDs
-ticketSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const today = new Date();
-    const dateStr = today.getFullYear() + 
-      String(today.getMonth() + 1).padStart(2, '0') + 
-      String(today.getDate()).padStart(2, '0');
+ticketSchema.pre('save', async function() {
+  if (this.isNew && !this.ticketId) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
     
-    // Find count of tickets created today to generate sequential index
-    const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-    const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     
     const Ticket = mongoose.model('Ticket');
     const todayCount = await Ticket.countDocuments({
@@ -93,7 +108,6 @@ ticketSchema.pre('save', async function(next) {
     const seqNum = String(todayCount + 1).padStart(4, '0');
     this.ticketId = `TIC-${dateStr}-${seqNum}`;
   }
-  next();
 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);

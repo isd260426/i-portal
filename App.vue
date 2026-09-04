@@ -17,7 +17,8 @@
 body {
   background-color: #000;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* Custom scrollbars for dashboard views */

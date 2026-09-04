@@ -22,6 +22,37 @@ mongoose.connect(MONGODB_URI)
   .catch((err) => console.error('MongoDB database connection failure:', err));
 
 // ----------------------------------------------------
+// ROOT & HEALTH CHECK ROUTES
+// ----------------------------------------------------
+
+app.get('/', (req, res) => {
+  res.json({
+    service: 'i-Ticketing Microservice API',
+    status: 'online',
+    version: '2.0.0',
+    endpoints: [
+      'GET /health',
+      'GET /api/master/units',
+      'GET /api/master/categories',
+      'POST /api/tickets',
+      'GET /api/tickets',
+      'GET /api/tickets/:id',
+      'PUT /api/tickets/:id'
+    ]
+  });
+});
+
+app.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'connected' : (dbState === 2 ? 'connecting' : 'disconnected');
+  res.json({
+    status: 'healthy',
+    database: dbStatus,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ----------------------------------------------------
 // API ROUTES
 // ----------------------------------------------------
 
@@ -54,32 +85,41 @@ app.post('/api/tickets', async (req, res) => {
       fap, 
       tanggalMelapor, 
       jenis, 
+      otherJenis,
       jumlah, 
       noRegister, 
       kendala, 
       priority, 
+      moreDetails,
       nomerHp 
     } = req.body;
 
-    // Check if the category requires a register number
-    const category = await Category.findOne({ code: jenis });
-    if (category && category.requiresRegister && (!noRegister || noRegister.trim() === '')) {
+    if (!namaPelapor || !unitPelapor || !jenis || !kendala || !nomerHp) {
+      return res.status(400).json({
+        error: 'Field Nama Pelapor, Unit Pelapor, Jenis Kendala, Kendala, dan WhatsApp / No HP wajib diisi.'
+      });
+    }
+
+    // Check if the category requires a register number (SIRS)
+    if (jenis === 'SIRS' && (!noRegister || noRegister.trim() === '')) {
       return res.status(400).json({ 
-        error: `Nomor Register wajib diisi jika Jenis Kendala adalah ${category.name}.` 
+        error: 'Nomor Register wajib diisi jika Jenis Kendala adalah SIRS.' 
       });
     }
 
     const newTicket = new Ticket({
       namaPelapor,
       unitPelapor,
-      fap,
+      fap: fap || '',
       tanggalMelapor: tanggalMelapor ? new Date(tanggalMelapor) : new Date(),
       jenis,
-      jumlah: Number(jumlah) || 1,
-      noRegister: category && category.requiresRegister ? noRegister : '',
+      otherJenis: otherJenis || '',
+      jumlah: jumlah ? String(jumlah) : '1',
+      noRegister: noRegister || '',
       kendala,
       priority: Number(priority) || 1,
-      nomerHp
+      moreDetails: moreDetails || '',
+      nomerHp: nomerHp || ''
     });
 
     const savedTicket = await newTicket.save();
@@ -91,7 +131,7 @@ app.post('/api/tickets', async (req, res) => {
 
   } catch (error) {
     console.error('Ticket submission failure:', error);
-    res.status(500).json({ error: 'Failed to submit ticket details.' });
+    res.status(500).json({ error: error.message || 'Failed to submit ticket details.' });
   }
 });
 

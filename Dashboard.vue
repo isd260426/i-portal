@@ -13,7 +13,7 @@
   </div>
 
   <!-- Navigation -->
-  <nav class="nav-bar">
+  <nav v-if="!isMobile || showMobileDashboard" class="nav-bar">
     <div class="nav-content">
       <div class="logo-section">
         <div class="moon-icon">
@@ -58,7 +58,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="main-content">
+  <main class="main-content" :class="{ 'mobile-ticket-focus': isMobile && !showMobileDashboard }">
     <!-- Hero Section -->
     <div class="hero-section">
       <div class="calendar-widget">
@@ -396,6 +396,29 @@
         2026 &#169; Information System Database. Dikembangkan oleh ISD
       </div>
     </footer>
+
+    <!-- Floating Navigation Trigger for Mobile Mode -->
+    <div v-if="isMobile" class="mobile-nav-toggle">
+      <button 
+        v-if="!showMobileDashboard" 
+        @click="toggleMobileDashboard(true)" 
+        class="btn-mobile-toggle"
+        title="Buka Menu & Dashboard Utama"
+      >
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard Utama</span>
+      </button>
+
+      <button 
+        v-else 
+        @click="toggleMobileDashboard(false)" 
+        class="btn-mobile-toggle pulse"
+        title="Fokus ke Form Pembuatan / Status Tiket"
+      >
+        <i class="fas fa-ticket-alt"></i>
+        <span>Fokus Tiket</span>
+      </button>
+    </div>
   </main>
 </template>
 
@@ -410,6 +433,26 @@ import * as THREE from 'three';
 const router = useRouter();
 const route = useRoute();
 
+// Mobile Viewport and Fullscreen Ticket Focus Logic
+const isMobile = ref(false);
+const showMobileDashboard = ref(false);
+
+const checkMobile = () => {
+  const mobile = window.innerWidth <= 768;
+  isMobile.value = mobile;
+  if (!mobile) {
+    showMobileDashboard.value = true;
+  }
+};
+
+const toggleMobileDashboard = (show) => {
+  if (typeof show === 'boolean') {
+    showMobileDashboard.value = show;
+  } else {
+    showMobileDashboard.value = !showMobileDashboard.value;
+  }
+};
+
 const activeTab = computed(() => {
   // Check active path to highlight appropriate tab/segmented-control
   if (route.path === '/i-ticketing') {
@@ -421,12 +464,23 @@ const activeTab = computed(() => {
 });
 
 const switchDashboard = (num) => {
-  if (num === activeTab.value) return;
+  if (num === activeTab.value) {
+    if (isMobile.value && num === 1) {
+      showMobileDashboard.value = false;
+    }
+    return;
+  }
   
   if (num === 1) {
     router.push('/i-ticketing');
+    if (isMobile.value) {
+      showMobileDashboard.value = false;
+    }
   } else if (num === 2) {
     router.push('/i-portal');
+    if (isMobile.value) {
+      showMobileDashboard.value = true;
+    }
   }
 };
 
@@ -676,11 +730,17 @@ const cleanupThreeJS = () => {
 // ----------------------------------------------------
 let clockInterval = null;
 
+const handleViewportResize = () => {
+  checkMobile();
+};
+
 onMounted(() => {
+  checkMobile();
+  window.addEventListener('resize', handleViewportResize, { passive: true });
+
   // Apply Apple Recognito body styles dynamically
   document.body.style.backgroundColor = '#000';
-  document.body.style.height = '100vh';
-  document.body.style.overflow = 'hidden';
+  document.body.style.minHeight = '100vh';
   document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
   document.body.style.webkitFontSmoothing = 'antialiased';
 
@@ -708,9 +768,11 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('resize', handleViewportResize);
+
   // Revert body styles to prevent leakage
   document.body.style.backgroundColor = '';
-  document.body.style.height = '';
+  document.body.style.minHeight = '';
   document.body.style.overflow = '';
   document.body.style.fontFamily = '';
   document.body.style.webkitFontSmoothing = '';
@@ -1303,6 +1365,88 @@ onUnmounted(() => {
 @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes marquee-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 
+/* Mobile Focus Mode */
+.main-content.mobile-ticket-focus {
+  top: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  z-index: 100;
+}
+
+.main-content.mobile-ticket-focus .hero-section,
+.main-content.mobile-ticket-focus .news-section,
+.main-content.mobile-ticket-focus .custom-footer {
+  display: none !important;
+}
+
+.main-content.mobile-ticket-focus .iframe-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.main-content.mobile-ticket-focus .iframe-header {
+  display: none !important;
+}
+
+.main-content.mobile-ticket-focus .iframe-wrapper {
+  height: 100% !important;
+}
+
+/* Floating Action Pill for Mobile Mode */
+.mobile-nav-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+}
+
+.btn-mobile-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(255, 107, 53, 0.6);
+  border-radius: 30px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 107, 53, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-mobile-toggle i {
+  color: #ff8c42;
+  font-size: 15px;
+}
+
+.btn-mobile-toggle:active {
+  transform: scale(0.94);
+}
+
+.btn-mobile-toggle.pulse {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  color: #000;
+  border-color: #ff8c42;
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.6);
+}
+
+.btn-mobile-toggle.pulse i {
+  color: #000;
+}
+
 /* Responsive Grid and Breakpoints */
 @media (min-width: 768px) { .footer-content { grid-template-columns: 1.2fr 1fr 1.2fr; } }
 @media (max-width: 1200px) {
@@ -1317,17 +1461,20 @@ onUnmounted(() => {
   .news-image-wrapper { height: 160px; }
 }
 @media (max-width: 768px) {
-  .nav-content { gap: 20px; }
+  .nav-content { gap: 14px; flex-direction: column; }
+  .logo-section { width: 100%; justify-content: center; }
+  .segmented-control { width: 100%; justify-content: center; }
+  .hero-section { padding: 0 16px; gap: 16px; }
   .hero-title { font-size: 22px; }
   .hero-title-container { min-height: 50px; }
   .hero-subtitle { font-size: 12px; }
-  .iframe-container { width: 100%; height: calc(100vh - 300px); min-height: 350px; margin-bottom: 16px; }
-  .segment-btn { padding: 6px 14px; font-size: 12px; }
+  .iframe-container { width: 100%; height: calc(100vh - 200px); min-height: 420px; margin-bottom: 16px; }
+  .segment-btn { padding: 8px 14px; font-size: 12px; flex: 1; text-align: center; }
   .calendar-widget { padding: 16px; max-width: 280px; }
   .calendar-date { font-size: 36px; }
   .flip-clock { padding: 16px; }
   .flip-digit { width: 40px; height: 56px; font-size: 26px; }
-  .custom-footer { padding: 24px 20px 16px; }
+  .custom-footer { padding: 24px 20px 70px; }
   .footer-title { font-size: 20px; }
   .news-section { padding: 30px 0; }
   .news-title { font-size: 22px; }

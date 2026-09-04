@@ -26,10 +26,11 @@ const unitsSeed = [
 ];
 
 const categoriesSeed = [
-  { name: 'SIRS (Sistem Informasi RS)', code: 'SIRS', requiresRegister: true },
-  { name: 'Jaringan & Internet', code: 'JARINGAN', requiresRegister: false },
-  { name: 'Hardware (PC / Printer / Order / Repair)', code: 'HARDWARE', requiresRegister: false },
-  { name: 'Lainnya', code: 'LAINNYA', requiresRegister: false }
+  { name: 'SIRS', code: 'SIRS', requiresRegister: true },
+  { name: 'Printer (Order/Repair)', code: 'PRINTER', requiresRegister: false },
+  { name: 'Komputer (Hardware Repair)', code: 'KOMPUTER', requiresRegister: false },
+  { name: 'Jaringan (Network Issue)', code: 'JARINGAN', requiresRegister: false },
+  { name: 'Other', code: 'OTHER', requiresRegister: false }
 ];
 
 const seedDB = async () => {

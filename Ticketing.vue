@@ -61,27 +61,27 @@
         </div>
       </div>
 
-      <!-- VIEW 2: FORM VIEW (Ticketing Submission Form - Restored Fields) -->
+      <!-- VIEW 2: FORM VIEW (IT Service Request Submission Form) -->
       <div v-else-if="currentView === 'form'" class="view-form animate-fade">
         <div class="form-card">
           <button @click="navigateTo('landing')" class="btn-back">
             <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
           
-          <h2 class="form-title">FORM <span class="accent-green">PELAPORAN</span></h2>
+          <h2 class="form-title">IT SERVICE <span class="accent-green">REQUEST</span></h2>
 
           <!-- Header Info -->
           <div class="form-header-info">
             <p class="desc-text">
-              Sistem pelaporan gangguan terpadu untuk mendukung kelancaran operasional melalui layanan TI yang responsif dan profesional.
+              LOG SERAH TERIMA DAFTAR MASALAH
             </p>
             <p class="emergency-text">
-              In Case Emergency please contact us at <a href="https://wa.me/+6282381707015" target="_blank" class="phone-link">+62 823-8170-7015</a>
+              In Case Emergency please contact us at <a href="https://wa.me/6282381707015" target="_blank" class="phone-link">+62 823-8170-7015</a>
             </p>
           </div>
 
           <form @submit.prevent="handleSubmit" class="ticket-form-fields">
-            <!-- Nama, Unit, FAP -->
+            <!-- Row 1: Nama, Unit, Tanggal -->
             <div class="form-row col-3">
               <div class="form-group">
                 <label>Nama Pelapor <span class="required">*</span></label>
@@ -95,31 +95,17 @@
               
               <div class="form-group">
                 <label>Unit Pelapor <span class="required">*</span></label>
-                <select v-model="form.unitPelapor" required>
-                  <option value="" disabled selected>- Pilih Unit -</option>
-                  <option 
-                    v-for="unit in units" 
-                    :key="unit.code" 
-                    :value="unit.code"
-                  >
-                    {{ unit.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>FAP / ID USER (Opsional)</label>
                 <input 
-                  type="text" 
-                  v-model="form.fap" 
-                  placeholder="Contoh: FAP A" 
+                  list="unitsList"
+                  v-model="form.unitPelapor" 
+                  placeholder="Pilih atau ketik unit"
+                  required 
                 />
-                <span class="field-hint">Jika berasal dari FAP, mohon cantumkan FAP mana asalnya.</span>
+                <datalist id="unitsList">
+                  <option v-for="unit in units" :key="unit.code" :value="unit.name" />
+                </datalist>
               </div>
-            </div>
 
-            <!-- Tanggal, Jenis, Jumlah -->
-            <div class="form-row col-3">
               <div class="form-group">
                 <label>Tanggal Melapor <span class="required">*</span></label>
                 <input 
@@ -128,77 +114,109 @@
                   required 
                 />
               </div>
+            </div>
 
-              <div class="form-group">
-                <label>Jenis <span class="required">*</span></label>
-                <select v-model="form.jenis" @change="handleJenisChange" required>
-                  <option value="" disabled selected>- Pilih Jenis -</option>
-                  <option 
-                    v-for="cat in categories" 
-                    :key="cat.code" 
-                    :value="cat.code"
-                  >
-                    {{ cat.name }}
-                  </option>
-                </select>
+            <!-- Row 2: Jenis Kendala (Radio / Choice Cards) -->
+            <div class="form-group full-width">
+              <label>Jenis <span class="required">*</span></label>
+              <div class="category-radio-grid">
+                <label 
+                  v-for="cat in availableCategories" 
+                  :key="cat.code" 
+                  :class="['category-radio-card', { active: form.jenis === cat.name }]"
+                >
+                  <input 
+                    type="radio" 
+                    name="jenisCategory" 
+                    :value="cat.name" 
+                    v-model="form.jenis"
+                    @change="handleJenisChange"
+                    required
+                  />
+                  <span>{{ cat.name }}</span>
+                </label>
               </div>
+              <!-- If 'Other' is selected, show input field -->
+              <div v-if="form.jenis === 'Other'" class="other-category-input mt-2">
+                <input 
+                  type="text" 
+                  v-model="form.otherJenis" 
+                  placeholder="Sebutkan jenis kendala lainnya..."
+                  required
+                />
+              </div>
+            </div>
 
+            <!-- Row 3: Jumlah & No Register -->
+            <div class="form-row col-2">
               <div class="form-group">
-                <label>Jumlah Item <span class="required">*</span></label>
+                <label>Jumlah <span class="required">*</span></label>
                 <select v-model="form.jumlah" required>
                   <option value="" disabled selected>- Pilih Jumlah -</option>
-                  <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value=">10">>10</option>
+                  <option value=">20">>20</option>
                 </select>
+              </div>
+
+              <!-- Register Number (Conditional if SIRS) -->
+              <div class="form-group">
+                <label>
+                  No Register 
+                  <span v-if="isRegisterRequired" class="required">* Wajib untuk jenis SIRS</span>
+                  <span v-else class="text-slate-400 font-normal"> (Opsional)</span>
+                </label>
+                <input 
+                  type="text" 
+                  v-model="form.noRegister" 
+                  :placeholder="isRegisterRequired ? 'Wajib diisi! Contoh: IGD.260301.001' : 'Contoh: IGD.260301.001'" 
+                  :required="isRegisterRequired"
+                />
               </div>
             </div>
 
-            <!-- Register Number (Conditional) -->
+            <!-- Row 4: Kendala -->
             <div class="form-group full-width">
-              <label>
-                No Register 
-                <span v-if="isRegisterRequired" class="required">* Wajib untuk jenis SIRS</span>
-              </label>
-              <span class="field-label-hint">(Jika SIRS Wajib No register, dan Identitas Lainnya)</span>
-              <input 
-                type="text" 
-                v-model="form.noRegister" 
-                :placeholder="isRegisterRequired ? 'Wajib diisi! Contoh: IGD.260301.001' : 'Contoh: IGD.260301.001 (Opsional)'" 
-                :required="isRegisterRequired"
-              />
-            </div>
-
-            <!-- Kendala -->
-            <div class="form-group full-width">
-              <label>Detail Kronologi <span class="required">*</span></label>
+              <label>Kendala <span class="required">*</span></label>
+              <span class="field-label-hint">Jelaskan Detail Hingga no register dan Rencana nya apa</span>
               <textarea 
                 v-model="form.kendala" 
-                placeholder="Jelaskan masalah secara detail..." 
-                rows="4"
+                placeholder="Tuliskan kendala secara rinci..." 
+                rows="3"
                 required
               ></textarea>
             </div>
 
-            <!-- Priority -->
-            <div class="form-group priority-group">
-              <label>Priority (Pilih salah satu) <span class="required">*</span></label>
+            <!-- Row 5: Priority -->
+            <div class="form-group priority-group full-width">
+              <label>Priority <span class="required">*</span></label>
               <div class="priority-buttons">
                 <button 
                   type="button" 
-                  :class="['priority-btn', { active: form.priority === 1 }]"
+                  :class="['priority-btn', { active: Number(form.priority) === 1 }]"
                   @click="form.priority = 1"
                 >
                   1
                 </button>
                 <button 
                   type="button" 
-                  :class="['priority-btn', { active: form.priority === 2 }]"
+                  :class="['priority-btn', { active: Number(form.priority) === 2 }]"
                   @click="form.priority = 2"
                 >
                   2
                 </button>
                 <button 
                   type="button" 
-                  :class="['priority-btn', { active: form.priority === 3 }]"
+                  :class="['priority-btn', { active: Number(form.priority) === 3 }]"
                   @click="form.priority = 3"
                 >
                   3
@@ -210,7 +228,17 @@
               </div>
             </div>
 
-            <!-- Nomer HP Konfirmasi & Action -->
+            <!-- Row 6: More details -->
+            <div class="form-group full-width">
+              <label>More details</label>
+              <textarea 
+                v-model="form.moreDetails" 
+                placeholder="Tambahan keterangan (opsional)..." 
+                rows="3"
+              ></textarea>
+            </div>
+
+            <!-- Row 7: Nomer HP Konfirmasi & Action -->
             <div class="form-row col-2 align-end">
               <div class="form-group">
                 <label>WhatsApp / No HP untuk Konfirmasi <span class="required">*</span></label>
@@ -218,13 +246,13 @@
                   type="text" 
                   v-model="form.nomerHp" 
                   placeholder="Contoh: 0821xxxxxxxx" 
-                  required 
+                  required
                 />
               </div>
               <div class="form-group">
                 <button type="submit" :disabled="submitting" class="btn-submit">
                   <span v-if="submitting">Memproses...</span>
-                  <span v-else><i class="fas fa-paper-plane"></i> KIRIM LAPORAN</span>
+                  <span v-else><i class="fas fa-paper-plane"></i> Kirim</span>
                 </button>
               </div>
             </div>
@@ -566,13 +594,29 @@
               <span class="info-value">{{ selectedTicket.jenis }}</span>
             </div>
             <div class="info-row">
+              <span class="info-label">Jumlah:</span>
+              <span class="info-value">{{ selectedTicket.jumlah || '1' }}</span>
+            </div>
+            <div class="info-row">
               <span class="info-label">Nomor Register:</span>
               <span class="info-value">{{ selectedTicket.noRegister || '-' }}</span>
             </div>
+            <div class="info-row">
+              <span class="info-label">Priority:</span>
+              <span class="info-value">{{ selectedTicket.priority === 1 ? '1 (LOW)' : (selectedTicket.priority === 3 ? '3 (HIGH)' : '2') }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">No HP:</span>
+              <span class="info-value">{{ selectedTicket.nomerHp || '-' }}</span>
+            </div>
           </div>
           <div class="border-quote-row">
-            <p class="info-label">Kronologi Kejadian</p>
+            <p class="info-label">Kronologi / Kendala</p>
             <p class="info-quote">"{{ selectedTicket.kendala }}"</p>
+          </div>
+          <div v-if="selectedTicket.moreDetails" class="border-quote-row mt-2">
+            <p class="info-label">More Details</p>
+            <p class="info-quote">"{{ selectedTicket.moreDetails }}"</p>
           </div>
           <div class="modal-divider"></div>
           <div class="modal-info-grid">
@@ -734,28 +778,46 @@ let slideInterval = null;
 // ----------------------------------------------------
 // Core Form Reactive State (Public Fields)
 // ----------------------------------------------------
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') return 'http://localhost:5000';
+  const hostname = window.location.hostname || 'localhost';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
+  return `http://${hostname}:5000`;
+};
+const API_BASE_URL = getApiBaseUrl();
+
 const form = ref({
   namaPelapor: '',
   unitPelapor: '',
   fap: '',
   tanggalMelapor: new Date().toISOString().substring(0, 10),
-  jenis: '',
-  jumlah: 1,
+  jenis: 'SIRS',
+  otherJenis: '',
+  jumlah: '1',
   noRegister: '',
   kendala: '',
   priority: 1, 
+  moreDetails: '',
   nomerHp: ''
 });
 
 const units = ref([]);
-const categories = ref([]);
+const availableCategories = ref([
+  { name: 'SIRS', code: 'SIRS', requiresRegister: true },
+  { name: 'Printer (Order/Repair)', code: 'PRINTER', requiresRegister: false },
+  { name: 'Komputer (Hardware Repair)', code: 'KOMPUTER', requiresRegister: false },
+  { name: 'Jaringan (Network Issue)', code: 'JARINGAN', requiresRegister: false },
+  { name: 'Other', code: 'OTHER', requiresRegister: false }
+]);
+const categories = availableCategories;
 const submitting = ref(false);
 const generatedTicketId = ref('');
 
 // Computed check to see if Category "SIRS" is active
 const isRegisterRequired = computed(() => {
-  const activeCategory = categories.value.find(cat => cat.code === form.value.jenis);
-  return activeCategory ? activeCategory.requiresRegister : false;
+  return form.value.jenis === 'SIRS';
 });
 
 const handleJenisChange = () => {
@@ -1032,13 +1094,13 @@ const initKategoriChart = () => {
 };
 
 // ----------------------------------------------------
-// API REST Integration Handlers (Vite Node Proxy)
+// API REST Integration Handlers (Dynamic Host Resolution)
 // ----------------------------------------------------
 
 const fetchMasterData = async () => {
   // Try fetching Master Units list from API
   try {
-    const unitsRes = await fetch('http://localhost:5000/api/master/units');
+    const unitsRes = await fetch(`${API_BASE_URL}/api/master/units`);
     if (unitsRes.ok) {
       units.value = await unitsRes.json();
     } else {
@@ -1059,38 +1121,27 @@ const fetchMasterData = async () => {
 
   // Try fetching Master Categories list from API
   try {
-    const categoriesRes = await fetch('http://localhost:5000/api/master/categories');
+    const categoriesRes = await fetch(`${API_BASE_URL}/api/master/categories`);
     if (categoriesRes.ok) {
-      categories.value = await categoriesRes.json();
-    } else {
-      throw new Error();
+      const data = await categoriesRes.json();
+      if (data && data.length > 0) {
+        availableCategories.value = data;
+      }
     }
-  } catch (err) {
-    categories.value = [
-      { name: 'SIRS (Sistem Informasi RS)', code: 'SIRS', requiresRegister: true },
-      { name: 'Jaringan & Internet', code: 'JARINGAN', requiresRegister: false },
-      { name: 'Hardware (PC / Printer / Order / Repair)', code: 'HARDWARE', requiresRegister: false },
-      { name: 'Lainnya', code: 'LAINNYA', requiresRegister: false }
-    ];
-  }
+  } catch (err) {}
 };
 
 const loadPublicTickets = async () => {
   loadingTickets.value = true;
   try {
-    const res = await fetch('http://localhost:5000/api/tickets');
+    const res = await fetch(`${API_BASE_URL}/api/tickets`);
     if (res.ok) {
       publicTickets.value = await res.json();
     } else {
       throw new Error();
     }
   } catch (error) {
-    console.warn('Backend API offline, loading mock tickets for preview.');
-    publicTickets.value = [
-      { ticketId: 'TIC-20260704-0001', namaPelapor: 'Budi', unitPelapor: 'UGD', jenis: 'SIRS', status: 'Pending', noRegister: 'IGD.260301.001', kendala: 'Layar login SIRS blank putih, tidak bisa input rekam medis baru.', priority: 2, nomerHp: '08123456789', handleBy: 'Haris', nomorBA: 'BA-98292-1', actionDetail: 'Sedang diperiksa modul konektor database.', tglSelesai: null },
-      { ticketId: 'TIC-20260704-0002', namaPelapor: 'Siti', unitPelapor: 'FARMASI', jenis: 'JARINGAN', status: 'Ongoing', kendala: 'Koneksi printer apotek putus, tidak bisa cetak label obat.', priority: 1, nomerHp: '08123456789', handleBy: 'Andi', nomorBA: '', actionDetail: 'Sedang dilakukan crimping ulang kabel RJ45.', tglSelesai: null },
-      { ticketId: 'TIC-20260704-0003', namaPelapor: 'Andi', unitPelapor: 'MCU', jenis: 'HARDWARE', status: 'Selesai', kendala: 'Monitor bergaris merah tebal di tengah layar.', priority: 3, nomerHp: '08123456789', handleBy: 'Herman', nomorBA: 'BA-98301-2', actionDetail: 'Dilakukan pergantian unit monitor cadangan baru.', tglSelesai: new Date().toISOString() }
-    ];
+    console.warn('Gagal memuat tiket dari backend:', error);
   } finally {
     loadingTickets.value = false;
   }
@@ -1098,18 +1149,14 @@ const loadPublicTickets = async () => {
 
 const loadAdminTickets = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/tickets');
+    const res = await fetch(`${API_BASE_URL}/api/tickets`);
     if (res.ok) {
       adminTickets.value = await res.json();
     } else {
       throw new Error();
     }
   } catch (err) {
-    adminTickets.value = [
-      { ticketId: 'TIC-20260704-0001', namaPelapor: 'Budi', unitPelapor: 'UGD', jenis: 'SIRS', status: 'Pending', noRegister: 'IGD.260301.001', kendala: 'Layar login SIRS blank putih, tidak bisa input rekam medis baru.', priority: 2, nomerHp: '08123456789', handleBy: 'Haris', nomorBA: 'BA-98292-1', actionDetail: 'Sedang diperiksa modul konektor database.', tglSelesai: null, createdAt: new Date().toISOString() },
-      { ticketId: 'TIC-20260704-0002', namaPelapor: 'Siti', unitPelapor: 'FARMASI', jenis: 'JARINGAN', status: 'Ongoing', kendala: 'Koneksi printer apotek putus, tidak bisa cetak label obat.', priority: 1, nomerHp: '08123456789', handleBy: 'Andi', nomorBA: '', actionDetail: 'Sedang dilakukan crimping ulang kabel RJ45.', tglSelesai: null, createdAt: new Date().toISOString() },
-      { ticketId: 'TIC-20260704-0003', namaPelapor: 'Andi', unitPelapor: 'MCU', jenis: 'HARDWARE', status: 'Selesai', kendala: 'Monitor bergaris merah tebal di tengah layar.', priority: 3, nomerHp: '08123456789', handleBy: 'Herman', nomorBA: 'BA-98301-2', actionDetail: 'Dilakukan pergantian unit monitor cadangan baru.', tglSelesai: new Date().toISOString(), createdAt: new Date().toISOString() }
-    ];
+    console.warn('Gagal memuat admin tickets:', err);
   } finally {
     nextTick(() => {
       initKategoriChart();
@@ -1120,12 +1167,16 @@ const loadAdminTickets = async () => {
 const handleSubmit = async () => {
   submitting.value = true;
   try {
-    const response = await fetch('http://localhost:5000/api/tickets', {
+    const payload = {
+      ...form.value,
+      jenis: form.value.jenis === 'Other' && form.value.otherJenis ? `Other (${form.value.otherJenis})` : form.value.jenis
+    };
+    const response = await fetch(`${API_BASE_URL}/api/tickets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(form.value)
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -1138,10 +1189,7 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('Submission error:', error);
-    const mockId = 'TIC-' + new Date().toISOString().substring(0, 10).replace(/-/g, '') + '-' + String(Math.floor(Math.random() * 1000) + 1).padStart(4, '0');
-    generatedTicketId.value = mockId;
-    resetFormFields();
-    navigateTo('success');
+    alert('Koneksi ke backend gagal. Pastikan service i-ticketing aktif.');
   } finally {
     submitting.value = false;
   }
@@ -1167,7 +1215,7 @@ const handleUpdateSubmit = async () => {
 
 const executeUpdateCall = async () => {
   try {
-    const response = await fetch(`http://localhost:5000/api/tickets/${editForm.value.ticketId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/tickets/${editForm.value.ticketId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -1188,22 +1236,8 @@ const executeUpdateCall = async () => {
       Swal.fire('Gagal', data.error || 'Gagal mengupdate ticket', 'error');
     }
   } catch (err) {
-    // Fallback updates in mock array
-    const idx = adminTickets.value.findIndex(t => t.ticketId === editForm.value.ticketId);
-    if (idx > -1) {
-      adminTickets.value[idx].handleBy = editForm.value.handleBy;
-      adminTickets.value[idx].status = editForm.value.status;
-      adminTickets.value[idx].nomorBA = editForm.value.nomorBA;
-      adminTickets.value[idx].actionDetail = editForm.value.actionDetail;
-      if (editForm.value.status === 'Selesai') {
-        adminTickets.value[idx].tglSelesai = new Date().toISOString();
-      }
-    }
     showEditModal.value = false;
-    Swal.fire('Berhasil', 'Ticket diupdate (Mode Simulasi)', 'success');
-    nextTick(() => {
-      initKategoriChart();
-    });
+    Swal.fire('Gagal', 'Terjadi kesalahan saat mengupdate ke database.', 'error');
   }
 };
 
@@ -1213,11 +1247,13 @@ const resetFormFields = () => {
     unitPelapor: '',
     fap: '',
     tanggalMelapor: new Date().toISOString().substring(0, 10),
-    jenis: '',
-    jumlah: 1,
+    jenis: 'SIRS',
+    otherJenis: '',
+    jumlah: '1',
     noRegister: '',
     kendala: '',
     priority: 1,
+    moreDetails: '',
     nomerHp: ''
   };
 };
@@ -1663,6 +1699,54 @@ select {
 
 textarea {
   resize: none;
+}
+
+/* Category Radio Cards Selection */
+.category-radio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.category-radio-card {
+  background: rgba(10, 10, 15, 0.6);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.category-radio-card:hover {
+  border-color: #64748b;
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.category-radio-card.active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.category-radio-card input[type="radio"] {
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.category-radio-card span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.other-category-input {
+  margin-top: 10px;
 }
 
 /* Priority Button Selectors */
@@ -2777,18 +2861,56 @@ textarea {
 
 /* Responsive Styles */
 @media (max-width: 768px) {
+  .ticketing-container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .public-navbar {
+    padding: 12px 16px;
+  }
+
+  .view-landing {
+    min-height: calc(100vh - 120px);
+    padding: 20px 16px 80px;
+  }
+
   .view-form, .view-track, .view-login {
-    padding: 20px 16px;
+    padding: 16px 12px 90px;
+    min-height: calc(100vh - 80px);
   }
   
   .form-card, .track-card, .login-card {
-    padding: 24px;
+    padding: 20px 16px;
+    border-radius: 16px;
   }
   
+  .form-title, .track-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
   .form-row.col-3,
   .form-row.col-2 {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .category-radio-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .priority-buttons {
+    max-width: 100%;
+  }
+
+  .priority-labels {
+    max-width: 100%;
   }
   
   .success-tips-grid {
@@ -2796,12 +2918,20 @@ textarea {
   }
   
   .landing-title {
-    font-size: 48px;
+    font-size: 38px;
+    line-height: 1.1;
   }
   
   .landing-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+  }
+
+  .btn-primary-green, .btn-outline {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
   }
   
   .modal-info-grid {
